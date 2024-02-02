@@ -1,0 +1,119 @@
+@import "tailwindcss";
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+:root {
+  --industrial-blue: #0a192f;
+  --industrial-grey: #f8f9fa;
+  --accent-blue: #0047ab;
+  --text-dark: #1a1a1a;
+  --text-muted: #6c757d;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  color: var(--text-dark);
+  background-color: #fff;
+  overflow-x: hidden;
+}
+
+.bg-industrial {
+  background-color: var(--industrial-blue);
+  color: #fff;
+}
+
+.text-industrial {
+  color: var(--industrial-blue);
+}
+
+.btn-industrial {
+  background-color: var(--industrial-blue);
+  color: #fff;
+  border-radius: 6px;
+  padding: 12px 30px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--industrial-blue);
+}
+
+.btn-industrial:hover {
+  background-color: transparent !important;
+  color: var(--industrial-blue) !important;
+}
+
+.btn-outline-industrial {
+  background-color: transparent;
+  color: var(--industrial-blue);
+  border-radius: 6px;
+  padding: 12px 30px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--industrial-blue);
+}
+
+.btn-outline-industrial:hover {
+  background-color: var(--industrial-blue);
+  color: #fff;
+}
+
+.section-padding {
+  padding: 100px 0;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-25%); }
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 18s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.hero-title {
+  font-size: clamp(2rem, 6vw, 4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+}
+
+.nav-link {
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  padding: 0.5rem 1rem !important;
+}
+
+.card-industrial {
+  border: none;
+  border-radius: 8px;
+  background: var(--industrial-grey);
+  transition: transform 0.3s ease;
+}
+
+.card-industrial:hover {
+  transform: translateY(-10px);
+}
+
+/* AOS Customizations */
+[data-aos] {
+  pointer-events: none;
+}
+.aos-animate {
+  pointer-events: auto;
+}
