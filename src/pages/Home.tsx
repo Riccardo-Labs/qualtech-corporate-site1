@@ -154,8 +154,8 @@ const Home = () => {
             ].map((industry, index) => (
               <Col lg={4} key={index} data-aos="fade-up" data-aos-delay={index * 100}>
                 <div className="position-relative overflow-hidden group" style={{ height: '400px' }}>
-                  <img src={industry.img} alt={industry.title} className="w-100 h-100 object-fit-cover transition-transform duration-500 group-hover:scale-110" referrerPolicy="no-referrer" />
-                  <div className="position-absolute bottom-0 start-0 w-100 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                  <img src={industry.img} alt={industry.title} className="w-100 h-100 object-fit-cover" style={{ transition: 'transform 0.5s ease' }} referrerPolicy="no-referrer" />
+                  <div className="position-absolute bottom-0 start-0 w-100 p-4" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
                     <h4 className="fw-bold text-white mb-2">{industry.title}</h4>
                     <p className="text-white-50 small mb-0">{industry.desc}</p>
                   </div>
