@@ -1,16 +1,26 @@
 'use client';
 import { useEffect, useRef } from 'react';
 
-const SPACING  = 32;   // px between dots
-const SPEED    = 90;   // px/s — wave travels downward at this speed
-const SIGMA    = 0.22; // wave envelope width as fraction of canvas height
-const REST_OP  = 0.05; // opacity when wave is not passing (almost invisible)
-const REST_R   = 1.0;  // dot radius at rest
-const PEAK_OP  = 0.30; // opacity at wave crest
-const PEAK_R   = 2.4;  // dot radius at wave crest
+const PARTICLE_COUNT = 520;
+const WAVE_SPEED     = 0.45;  // rad/s — how fast the ribbon oscillates
+const WAVE_AMP       = 0.17;  // fraction of canvas height
+const WAVE_FREQ      = 1.3;   // full cycles across width
+const RIBBON_SIGMA   = 22;    // px — Gaussian spread perpendicular to spine
 
-// Slight horizontal curvature so the wave front is not a flat line
-const H_CURVE  = 28;   // px of sinusoidal curve across the width
+interface Particle {
+  t:       number; // position along spine [0, 1]
+  offset:  number; // perpendicular Gaussian offset (px)
+  size:    number; // radius (px)
+  opacity: number; // base opacity
+  phase:   number; // individual shimmer phase
+}
+
+function boxMullerNormal(): number {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
 
 export default function HeroParticles() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -22,67 +32,100 @@ export default function HeroParticles() {
     if (!ctx) return;
 
     let rafId: number;
-    let visible = true;
-    let prev = 0;
+    let visible   = true;
+    let startTime: number | null = null;
 
-    // waveY is the Y-position of the wave crest (can be outside canvas bounds)
-    // Starts above the canvas and scrolls down; loops back when fully past bottom
-    let waveY = -canvas.height * SIGMA * 3;
+    /* ── Build particle pool ── */
+    const particles: Particle[] = [];
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const t      = Math.random();
+      const offset = boxMullerNormal() * RIBBON_SIGMA;
 
+      // size tiers: 5% large, 20% medium, 75% small
+      const rng = Math.random();
+      let size: number;
+      if      (rng < 0.05) size = 4 + Math.random() * 5;   // 4–9 px
+      else if (rng < 0.25) size = 1.8 + Math.random() * 2.2; // 1.8–4 px
+      else                 size = 0.5 + Math.random() * 1.3;  // 0.5–1.8 px
+
+      // closer to spine → more opaque
+      const distFactor = Math.exp(-(offset * offset) / (2 * RIBBON_SIGMA * RIBBON_SIGMA));
+      const opacity    = (0.25 + distFactor * 0.75) * (0.55 + Math.random() * 0.45);
+
+      particles.push({ t, offset, size, opacity, phase: Math.random() * Math.PI * 2 });
+    }
+
+    /* ── Canvas sizing ── */
     const resize = () => {
       canvas.width  = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
-      // reset wave to top so resize doesn't cause a jump
-      waveY = -canvas.height * SIGMA * 3;
     };
 
+    /* ── Spine curve: diagonal from bottom-left to upper-right, sinusoidal ── */
+    const spinePoint = (t: number, time: number, W: number, H: number) => {
+      const x     = t * W;
+      const baseY = H * (0.68 - t * 0.36);                                   // diagonal
+      const waveY = Math.sin(t * WAVE_FREQ * Math.PI * 2 - time * WAVE_SPEED) * H * WAVE_AMP;
+      return { x, y: baseY + waveY };
+    };
+
+    /* ── Perpendicular normal to spine at t ── */
+    const spineNormal = (t: number, time: number, W: number, H: number) => {
+      const dt = 0.002;
+      const a  = spinePoint(Math.max(0, t - dt), time, W, H);
+      const b  = spinePoint(Math.min(1, t + dt), time, W, H);
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      return { nx: -dy / len, ny: dx / len };
+    };
+
+    /* ── Draw loop ── */
     const draw = (ts: number) => {
       rafId = requestAnimationFrame(draw);
       if (!visible) return;
 
-      const dt = Math.min((ts - prev) / 1000, 0.05); // cap at 50ms
-      prev = ts;
+      if (startTime === null) startTime = ts;
+      const time = (ts - startTime) / 1000;
 
       const W = canvas.width;
       const H = canvas.height;
 
-      // advance wave
-      waveY += SPEED * dt;
-
-      // loop: once the wave is fully past the bottom, restart from top
-      const loopPoint = H + H * SIGMA * 3;
-      if (waveY > loopPoint) waveY -= loopPoint + H * SIGMA * 3;
-
       ctx.clearRect(0, 0, W, H);
 
-      const cols = Math.ceil(W / SPACING) + 1;
-      const rows = Math.ceil(H / SPACING) + 1;
-      const sigma = H * SIGMA;
+      for (const p of particles) {
+        const { x: sx, y: sy } = spinePoint(p.t, time, W, H);
+        const { nx, ny }       = spineNormal(p.t, time, W, H);
 
-      for (let r = 0; r < rows; r++) {
-        const y = r * SPACING;
+        const x = sx + nx * p.offset;
+        const y = sy + ny * p.offset;
 
-        for (let c = 0; c < cols; c++) {
-          const x = c * SPACING;
+        const shimmer      = 0.82 + 0.18 * Math.sin(time * 1.8 + p.phase);
+        const finalOpacity = Math.min(1, p.opacity * shimmer);
 
-          // slightly curve the wave front horizontally (organic feel)
-          const localWaveY = waveY + Math.sin(x * 0.018) * H_CURVE;
-
-          // Gaussian envelope: peak = 1 when y == localWaveY, falls off symmetrically
-          const dist  = y - localWaveY;
-          const pulse = Math.exp(-(dist * dist) / (2 * sigma * sigma));
-
-          const opacity = REST_OP + pulse * (PEAK_OP - REST_OP);
-          const radius  = REST_R  + pulse * (PEAK_R  - REST_R);
-
-          ctx.beginPath();
-          ctx.arc(x, y, radius, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255,255,255,${opacity.toFixed(3)})`;
-          ctx.fill();
+        // Large dots glow; small ones are pure solid cyan
+        if (p.size > 4) {
+          ctx.shadowBlur  = 12;
+          ctx.shadowColor = `rgba(120,210,255,0.6)`;
+        } else {
+          ctx.shadowBlur  = 0;
         }
+
+        // Subtle color variance: some dots leaning cooler, some warmer
+        const isWarm = p.phase > Math.PI;
+        const r = isWarm ? 130 : 95;
+        const g = isWarm ? 215 : 195;
+
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},255,${finalOpacity.toFixed(3)})`;
+        ctx.fill();
       }
+
+      ctx.shadowBlur = 0; // reset after frame
     };
 
+    /* ── Visibility pause ── */
     const observer = new IntersectionObserver(
       ([e]) => { visible = e.isIntersecting; },
       { threshold: 0 },
