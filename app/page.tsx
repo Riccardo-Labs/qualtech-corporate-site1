@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, ShieldCheck, Globe, Zap } from 'lucide-react';
-import HeroParticles from '@/components/HeroParticles';
+import StarsBackground from '@/components/StarsBackground';
 
 const partners = [
   { src: '/partners/winkler.jpg', alt: 'Winkler', maxHeight: '80px', maxWidth: '220px', href: 'https://www.w-u-d.com/' },
@@ -34,19 +34,7 @@ export default function Home() {
         className="bg-industrial relative overflow-hidden flex items-center"
         style={{ minHeight: '77vh' }}
       >
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              'url(https://images.unsplash.com/photo-1565608087341-404b25458fed?auto=format&fit=crop&q=80&w=1920)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        >
-          <div className="absolute inset-0" style={{ backgroundColor: 'rgba(10, 25, 47, 0.78)' }} />
-        </div>
-
-        <HeroParticles />
+        <StarsBackground />
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 w-full">
           <div className="max-w-2xl" data-aos="fade-up">
