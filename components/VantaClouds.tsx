@@ -13,7 +13,6 @@ export default function VantaClouds() {
 
     (async () => {
       const THREE = await import('three');
-      // @ts-expect-error vanta has no type declarations
       const { default: CLOUDS2 } = await import('vanta/dist/vanta.clouds2.min');
 
       if (cancelled || !containerRef.current) return;

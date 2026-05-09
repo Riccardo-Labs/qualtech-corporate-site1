@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, ShieldCheck, Globe, Zap } from 'lucide-react';
-import StarsBackground from '@/components/StarsBackground';
+import VantaFogClient from '@/components/VantaFogClient';
 
 const partners = [
   { src: '/partners/winkler.jpg', alt: 'Winkler', maxHeight: '80px', maxWidth: '220px', href: 'https://www.w-u-d.com/' },
@@ -34,7 +34,7 @@ export default function Home() {
         className="bg-industrial relative overflow-hidden flex items-center"
         style={{ minHeight: '77vh' }}
       >
-        <StarsBackground />
+        <VantaFogClient />
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 w-full">
           <div className="max-w-2xl" data-aos="fade-up">
